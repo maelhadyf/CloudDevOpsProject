@@ -1,0 +1,17 @@
+---
+- name: Install Jenkins
+  hosts: jenkins
+  become: yes
+  roles:
+    - java
+    - jenkins
+
+- name: Install Development Tools
+  hosts: tools
+  become: yes
+  roles:
+    - java
+    - git
+    - docker
+    - sonarqube
+    - openshift-cli

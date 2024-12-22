@@ -1,0 +1,133 @@
+jenkins:
+  systemMessage: "Jenkins configured using JCasC"
+  numExecutors: 0
+  nodes:
+    - permanent:
+        name: "jenkins-slave"
+        labelString: "jenkins-slave"
+        numExecutors: 2
+        remoteFS: "/home/jenkins"
+        launcher:
+          ssh:
+            host: "${SLAVE_HOST}"
+            credentialsId: "jenkins-slave-ssh"
+            port: 22
+            sshHostKeyVerificationStrategy:
+              manuallyTrustedKeyVerificationStrategy:
+                requireInitialManualTrust: false
+        mode: EXCLUSIVE
+        retentionStrategy: "always"
+
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          # SSH credentials for Jenkins slave
+          - basicSSHUserPrivateKey:
+              scope: GLOBAL
+              id: "jenkins-slave-ssh"
+              username: "ec2-user"
+              description: "SSH key for Jenkins slave"
+              privateKeySource:
+                directEntry:
+                  privateKey: ${JENKINS_SLAVE_SSH_PRIVATE_KEY}
+
+          # Git credentials
+          - usernamePassword:
+              scope: GLOBAL
+              id: "git-credentials"
+              username: ${GIT_USERNAME}
+              password: ${GIT_PASSWORD}
+              description: "Git credentials"
+
+          # Docker registry credentials
+          - usernamePassword:
+              scope: GLOBAL
+              id: "docker-registry-credentials"
+              username: ${DOCKER_REGISTRY_USER}
+              password: ${DOCKER_REGISTRY_PASSWORD}
+              description: "Docker registry credentials"
+
+#          # SonarQube credentials
+#          - usernamePassword:
+#              scope: GLOBAL
+#              id: "sonar-credentials"
+#              username: ${SONARQUBE_USER}
+#              password: ${SONARQUBE_PASSWORD}
+#              description: "SonarQube credentials"
+
+          # OpenShift credentials
+          - openshiftToken:
+              scope: GLOBAL
+              id: "openshift-credentials"
+              secret: ${OPENSHIFT_TOKEN}
+              description: "OpenShift authentication token"
+
+tool:
+  git:
+    installations:
+      - name: "Default"
+        home: "git"
+  
+  maven:
+    installations:
+      - name: "Maven3"
+        home: "/usr/share/maven"
+        
+  jdk:
+    installations:
+      - name: "JDK11"
+        home: "/usr/lib/jvm/java-11"
+
+  globalLibraries:
+    libraries:
+      - name: "shared-library"
+        defaultVersion: "main"
+        retriever:
+          modernSCM:
+            scm:
+              git:
+                remote: "https://github.com/your-org/Jenkins-Shared-Library.git"
+                credentialsId: "git-credentials"
+
+security:
+  globalJobDslSecurityConfiguration:
+    useScriptSecurity: false
+  
+  queueItemAuthenticator:
+    authenticators:
+      - global:
+          strategy: triggeringUsersAuthorizationStrategy
+
+jobs:
+  - script: >
+      pipelineJob('your-application') {
+        definition {
+          cpsScm {
+            scm {
+              git {
+                remote {
+                  url('https://github.com/your-org/pipeline-repo.git')
+                  credentials('git-credentials')
+                }
+                branch('*/main')
+              }
+            }
+            scriptPath('Jenkinsfile')
+          }
+        }
+        properties {
+          disableConcurrentBuilds()
+          buildDiscarder {
+            strategy {
+              logRotator {
+                daysToKeepStr('30')
+                numToKeepStr('10')
+              }
+            }
+          }
+        }
+        triggers {
+          scm('H/5 * * * *')
+        }
+      }

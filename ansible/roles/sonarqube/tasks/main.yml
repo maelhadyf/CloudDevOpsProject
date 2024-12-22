@@ -1,0 +1,56 @@
+---
+- name: Install required packages
+  dnf:
+    name:
+      - unzip
+      - wget
+    state: present
+
+- name: Create SonarQube directory
+  file:
+    path: /opt/sonarqube
+    state: directory
+    mode: '0755'
+
+- name: Download SonarQube
+  get_url:
+    url: https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-9.9.0.65466.zip
+    dest: /opt/sonarqube.zip
+
+- name: Extract SonarQube
+  unarchive:
+    src: /opt/sonarqube.zip
+    dest: /opt/
+    remote_src: yes
+
+- name: Move SonarQube files
+  shell: mv /opt/sonarqube-* /opt/sonarqube
+  args:
+    creates: /opt/sonarqube/bin
+
+- name: Create SonarQube user
+  user:
+    name: sonar
+    system: yes
+    shell: /sbin/nologin
+
+- name: Set SonarQube directory ownership
+  file:
+    path: /opt/sonarqube
+    owner: sonar
+    group: sonar
+    recurse: yes
+
+- name: Create SonarQube service file
+  template:
+    src: sonarqube.service.j2
+    dest: /etc/systemd/system/sonarqube.service
+
+- name: Set system limits for SonarQube
+  sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    state: present
+  with_items:
+    - { name: 'vm.max_map_count', value: '262144' }
+    - { name: 'fs.file-max', value: '65536' }

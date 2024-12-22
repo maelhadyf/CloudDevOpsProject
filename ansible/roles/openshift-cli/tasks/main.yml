@@ -1,0 +1,40 @@
+---
+- name: Create temporary directory for OpenShift CLI
+  file:
+    path: /tmp/openshift-cli
+    state: directory
+    mode: '0755'
+
+- name: Download OpenShift CLI
+  get_url:
+    url: "{{ openshift_cli_base_url }}/{{ openshift_cli_version }}/openshift-client-linux.tar.gz"
+    dest: /tmp/openshift-cli/openshift-client-linux.tar.gz
+    mode: '0644'
+
+- name: Extract OpenShift CLI
+  unarchive:
+    src: /tmp/openshift-cli/openshift-client-linux.tar.gz
+    dest: /usr/local/bin
+    remote_src: yes
+
+- name: Set executable permissions
+  file:
+    path: "{{ item }}"
+    mode: '0755'
+  loop:
+    - /usr/local/bin/oc
+    - /usr/local/bin/kubectl
+
+- name: Verify OpenShift CLI installation
+  command: oc version --client
+  register: oc_version
+  changed_when: false
+
+- name: Display OpenShift CLI version
+  debug:
+    var: oc_version.stdout
+
+- name: Clean up temporary files
+  file:
+    path: /tmp/openshift-cli
+    state: absent

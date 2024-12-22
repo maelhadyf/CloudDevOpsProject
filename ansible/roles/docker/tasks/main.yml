@@ -1,0 +1,30 @@
+---
+- name: Install Docker dependencies
+  dnf:
+    name: 
+      - yum-utils
+      - device-mapper-persistent-data
+      - lvm2
+    state: present
+
+- name: Install Docker
+  dnf:
+    name: docker
+    state: present
+
+- name: Start Docker service
+  systemd:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: Add ec2-user to docker group
+  user:
+    name: ec2-user
+    groups: docker
+    append: yes
+
+- name: Restart Docker service
+  systemd:
+    name: docker
+    state: restarted

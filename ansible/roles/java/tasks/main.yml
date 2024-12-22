@@ -1,0 +1,5 @@
+---
+- name: Install Java 21
+  dnf:
+    name: java-21-amazon-corretto
+    state: present
