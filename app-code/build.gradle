@@ -9,10 +9,6 @@ sonarqube {
     properties {
         property 'sonar.projectKey', 'java-app'
         property 'sonar.host.url', 'http://localhost:9000'
-        property 'sonar.sourceEncoding', 'UTF-8'
-        property 'sonar.java.binaries', 'build/classes'
-        property 'sonar.sources', 'src/main'
-        property 'sonar.tests', 'src/test'
     }
 }
 
