@@ -3,7 +3,7 @@
   hosts: jenkins
   become: yes
   roles:
-    - java
+    - java-21
     - git
     - jenkins
 
@@ -11,7 +11,7 @@
   hosts: tools
   become: yes
   roles:
-    - java
+    - java-11-17
     - git
     - docker
     - sonarqube

@@ -63,3 +63,15 @@
   with_items:
     - { name: 'vm.max_map_count', value: '262144' }
     - { name: 'fs.file-max', value: '65536' }
+
+- name: Start SonarQube service
+  systemd:
+    name: sonarqube
+    state: started
+    enabled: yes
+    daemon_reload: yes
+
+- name: Check SonarQube service status
+  systemd:
+    name: sonarqube
+    state: started
