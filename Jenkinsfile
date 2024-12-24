@@ -21,9 +21,7 @@ pipeline {
             steps {
                 deleteDir()
 
-                withCredentials([usernamePassword(credentialsId: 'git-credentials', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
-                    checkout scm
-                }
+                checkout scm  // Simple one-liner
             }
         }
         
