@@ -41,15 +41,10 @@ tool:
     installations:
       - name: "Default"
         home: "/usr/bin/git"    # Update based on 'which git' output
-
-  maven:
-    installations:
-      - name: "Maven3"
-        home: "/usr/bin/mvn"  # Update based on 'which mvn' output
         
   jdk:
     installations:
-      - name: "JDK21"
+      - name: "JDK11"
         home: "/usr/bin/java"  # Update based on actual Java path
 
 

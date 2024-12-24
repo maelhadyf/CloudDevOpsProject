@@ -1,5 +1,0 @@
----
-- name: Install Maven
-  dnf:
-    name: maven
-    state: present

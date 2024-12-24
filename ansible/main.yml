@@ -16,4 +16,3 @@
     - docker
     - sonarqube
     - openshift-cli
-    - maven

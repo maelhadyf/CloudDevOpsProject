@@ -3,6 +3,10 @@ pipeline {
         label 'jenkins-slave'
     }
 
+    tools {
+        jdk 'JDK11'  // Must be configured in Jenkins Global Tool Configuration
+    }
+
     environment {
         appGitUrl = 'https://github.com/maelhadyf/CloudDevOpsProject.git'
         appBranch = 'main'  // or whatever branch you're using
@@ -26,19 +30,15 @@ pipeline {
         }
         
         stage('Unit Test') {
-            tools {
-                jdk 'JDK17'  // Make sure this JDK is configured in Jenkins
-            }
             steps {
                 dir('app-code') {
                     sh '''
-                        # Set JAVA_HOME for Gradle
-                        export JAVA_HOME=$JAVA_HOME_17
-                        java -version
-                        
+
                         # Make gradlew executable
                         chmod +x ./gradlew
                         
+                        java -version
+
                         # Run tests
                         ./gradlew test
                     '''
