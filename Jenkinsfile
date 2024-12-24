@@ -28,9 +28,17 @@ pipeline {
         stage('Unit Test') {
             steps {
                 dir('app-code') {
-                    withMaven(maven: 'Maven3', jdk: 'JDK21') {
-                        sh 'mvn test'
-                    }
+                    sh '''
+                        # Show current directory and contents for debugging
+                        pwd
+                        ls -la
+
+                        # Make gradlew executable
+                        chmod +x ./gradlew
+                        
+                        # Run tests
+                        ./gradlew test
+                    '''
                 }
             }
             post {
@@ -43,9 +51,9 @@ pipeline {
         stage('Build JAR') {
             steps {
                 dir('app-code') {
-                    withMaven(maven: 'Maven3', jdk: 'JDK21') {
-                        sh 'mvn clean package -DskipTests'
-                    }
+                    sh '''
+                        ./gradlew clean build -x test
+                    '''
                 }
             }
         }
@@ -53,13 +61,11 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 dir('app-code') {
-                    withMaven(maven: 'Maven3', jdk: 'JDK21') {
-                        sh """
-                            mvn sonar:sonar \
-                            -Dsonar.projectKey=java-app \
-                            -Dsonar.host.url=http://localhost:9000
-                        """
-                    }
+                    sh '''
+                        ./gradlew sonarqube \
+                        -Dsonar.projectKey=java-app \
+                        -Dsonar.host.url=http://localhost:9000
+                    '''
                 }
             }
         }
