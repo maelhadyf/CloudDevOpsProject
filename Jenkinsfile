@@ -26,16 +26,7 @@ pipeline {
             steps {
                 deleteDir()
 
-                withCredentials([usernamePassword(credentialsId: 'git-credentials', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
-                    sh """
-                        git init
-                        git config --local credential.helper '!f() { echo username=\$GIT_USERNAME; echo password=\$GIT_PASSWORD; }; f'
-                        git remote add origin ${appGitUrl}
-                        git fetch origin
-                        git checkout -B ${appBranch} origin/${appBranch}
-                        git config --local --unset credential.helper
-                    """
-                }
+                checkout scm  // Simple one-liner
             }
         }
         
