@@ -3,14 +3,12 @@ pipeline {
         label 'jenkins-slave'
     }
 
-    tools {
-        jdk 'JDK11'  // Must be configured in Jenkins Global Tool Configuration
-    }
 
     environment {
         appGitUrl = 'https://github.com/maelhadyf/CloudDevOpsProject.git'
         appBranch = 'main'  // or whatever branch you're using
         dockerRegistry = 'maelhadyf'
+        JAVA_HOME = '/usr/lib/jvm/java-11-amazon-corretto.x86_64/bin/java'
     }
 
     
@@ -33,11 +31,11 @@ pipeline {
             steps {
                 dir('app-code') {
                     sh '''
+                        export PATH=$JAVA_HOME/bin:$PATH
+                        java -version
 
                         # Make gradlew executable
                         chmod +x ./gradlew
-                        
-                        java -version
 
                         # Run tests
                         ./gradlew test
