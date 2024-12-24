@@ -1,0 +1,87 @@
+jenkins:
+  systemMessage: "Jenkins configured using JCasC"
+  numExecutors: 0
+  nodes:
+    - permanent:
+        name: "jenkins-slave"
+        labelString: "jenkins-slave"
+        numExecutors: 2
+        remoteFS: "/home/jenkins"
+        launcher:
+          ssh:
+            host: "44.222.190.238"
+            credentialsId: "jenkins-slave-ssh"
+            port: 22
+            sshHostKeyVerificationStrategy:
+              manuallyTrustedKeyVerificationStrategy:
+                requireInitialManualTrust: false
+        mode: EXCLUSIVE
+        retentionStrategy: "always"
+
+security:
+  scriptApproval:
+    approvedSignatures:
+    - "method groovy.lang.GroovyObject invokeMethod java.lang.String java.lang.Object"
+    - "staticMethod org.codehaus.groovy.runtime.DefaultGroovyMethods plus java.util.List java.lang.Object"
+
+  apiToken:
+    creationOfLegacyTokenEnabled: false
+    tokenGenerationOnCreationEnabled: false
+  queueItemAuthenticator:
+    authenticators: []
+
+unclassified:
+  location:
+    url: "http://localhost:8080/"
+  shell:
+    shell: "/bin/bash"
+
+tool:
+  git:
+    installations:
+      - name: "Default"
+        home: "/usr/bin/git"    # Update based on 'which git' output
+
+  maven:
+    installations:
+      - name: "Maven3"
+        home: "/usr/bin/mvn"  # Update based on 'which mvn' output
+        
+  jdk:
+    installations:
+      - name: "JDK21"
+        home: "/usr/bin/java"  # Update based on actual Java path
+
+
+jobs:
+  - script: >
+      pipelineJob('java-app') {
+        definition {
+          cpsScm {
+            scm {
+              git {
+                remote {
+                  url('https://github.com/maelhadyf/CloudDevOpsProject.git')
+                  credentials('git-credentials')
+                }
+                branch('*/main')
+              }
+            }
+            scriptPath('Jenkinsfile')
+          }
+        }
+        configure { project ->
+          project / 'properties' / 'jenkins.model.BuildDiscarderProperty' {
+            strategy(class: 'hudson.tasks.LogRotator') {
+              daysToKeep(30)
+              numToKeep(10)
+              artifactDaysToKeep(30)
+              artifactNumToKeep(10)
+            }
+          }
+        }
+
+        triggers {
+          scm('H/5 * * * *')
+        }
+      }

@@ -4,6 +4,7 @@
   become: yes
   roles:
     - java
+    - git
     - jenkins
 
 - name: Install Development Tools
@@ -15,3 +16,4 @@
     - docker
     - sonarqube
     - openshift-cli
+    - maven

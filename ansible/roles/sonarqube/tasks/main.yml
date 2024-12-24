@@ -1,10 +1,14 @@
----
 - name: Install required packages
   dnf:
     name:
       - unzip
       - wget
     state: present
+
+- name: Remove existing SonarQube directory
+  file:
+    path: /opt/sonarqube
+    state: absent
 
 - name: Create SonarQube directory
   file:
@@ -23,10 +27,15 @@
     dest: /opt/
     remote_src: yes
 
-- name: Move SonarQube files
-  shell: mv /opt/sonarqube-* /opt/sonarqube
+- name: Copy SonarQube files
+  shell: cp -r /opt/sonarqube-9.9.0.65466/* /opt/sonarqube/
   args:
     creates: /opt/sonarqube/bin
+
+- name: Remove extracted directory
+  file:
+    path: /opt/sonarqube-9.9.0.65466
+    state: absent
 
 - name: Create SonarQube user
   user:

@@ -1,9 +1,7 @@
-@Library('shared-library') _
 
-def appGitUrl = 'https://github.com/your-org/app-repo.git'
+def appGitUrl = 'https://github.com/maelhadyf/CloudDevOpsProject.git'
 def appBranch = 'main'
-def dockerRegistry = 'your-registry.com'
-def imageTag = ''
+def dockerRegistry = 'maelhadyf'
 
 pipeline {
     agent {
@@ -19,21 +17,23 @@ pipeline {
     stages {
         stage('Checkout Application') {
             steps {
-                dir('app') {
-                    git branch: appBranch,
-                        credentialsId: 'git-credentials',
-                        url: appGitUrl
-                }
-                script {
-                    imageTag = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+                dir('app-code') {
+                    withCredentials([usernamePassword(credentialsId: 'git-credentials', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
+                        sh '''
+                            git config --local credential.helper "!f() { echo username=\\$GIT_USERNAME; echo password=\\$GIT_PASSWORD; }; f"
+                            git clone ${appGitUrl} .
+                            git checkout ${appBranch}
+                            git config --local --unset credential.helper
+                        '''
+                    }
                 }
             }
         }
         
         stage('Unit Test') {
             steps {
-                dir('app') {
-                    withMaven(maven: 'Maven3', jdk: 'JDK11') {
+                dir('app-code') {
+                    withMaven(maven: 'Maven3', jdk: 'JDK21') {
                         sh 'mvn test'
                     }
                 }
@@ -47,8 +47,8 @@ pipeline {
         
         stage('Build JAR') {
             steps {
-                dir('app') {
-                    withMaven(maven: 'Maven3', jdk: 'JDK11') {
+                dir('app-code') {
+                    withMaven(maven: 'Maven3', jdk: 'JDK21') {
                         sh 'mvn clean package -DskipTests'
                     }
                 }
@@ -57,15 +57,13 @@ pipeline {
         
         stage('SonarQube Analysis') {
             steps {
-                dir('app') {
-                    withSonarQubeEnv('SonarQube') {
-                        withMaven(maven: 'Maven3', jdk: 'JDK11') {
-                            sh """
-                                mvn sonar:sonar \
-                                -Dsonar.projectKey=your-project \
-                                -Dsonar.host.url=http://localhost:9000
-                            """
-                        }
+                dir('app-code') {
+                    withMaven(maven: 'Maven3', jdk: 'JDK21') {
+                        sh """
+                            mvn sonar:sonar \
+                            -Dsonar.projectKey=java-app \
+                            -Dsonar.host.url=http://localhost:9000
+                        """
                     }
                 }
             }
@@ -73,7 +71,7 @@ pipeline {
         
         stage('Build Image') {
             steps {
-                dir('app') {
+                dir('app-code') {
                     
                     sh """
                         docker build -t java-app:${BUILD_NUMBER} .
@@ -89,8 +87,7 @@ pipeline {
                     sh """
                         echo \$DOCKER_PASS | docker login ${dockerRegistry} -u \$DOCKER_USER --password-stdin
                         docker tag java-app:${BUILD_NUMBER} ${dockerRegistry}/java-app:${BUILD_NUMBER}
-                        docker push ${dockerRegistry}/java-app:${imageTag}
-                        docker push ${dockerRegistry}/java-app:latest
+                        docker push ${dockerRegistry}/java-app:${BUILD_NUMBER}
                         docker logout ${dockerRegistry}
                     """
                 }
@@ -103,8 +100,18 @@ pipeline {
                 withCredentials([string(credentialsId: 'openshift-credentials', variable: 'TOKEN')]) {
                     sh """
                         oc login --token=${TOKEN}
-                        oc set image deployment/your-app your-app=${dockerRegistry}/your-app:${BUILD_NUMBER}
-                        oc rollout status deployment/your-app
+
+                        # Update deployment with local image
+                        oc set image deployment/java-app java-app=docker://localhost:5000/java-app:${BUILD_NUMBER} --local
+                        
+                        # Create or update service to expose port 8081
+                        oc create service clusterip java-app --tcp=8081:8081 --dry-run=client -o yaml | oc apply -f -
+                        
+                        # Create route to expose the service
+                        oc expose service java-app --port=8081 --target-port=8081 || true
+                        
+                        # Wait for rollout to complete
+                        oc rollout status deployment/java-app
                     """
                 }
             }
