@@ -1,12 +1,14 @@
-
-def appGitUrl = 'https://github.com/maelhadyf/CloudDevOpsProject.git'
-def appBranch = 'main'
-def dockerRegistry = 'maelhadyf'
-
 pipeline {
     agent {
         label 'jenkins-slave'
     }
+
+    environment {
+        appGitUrl = 'https://github.com/maelhadyf/CloudDevOpsProject.git'
+        appBranch = 'main'  // or whatever branch you're using
+        dockerRegistry = 'maelhadyf'
+    }
+
     
     options {
         timestamps()
