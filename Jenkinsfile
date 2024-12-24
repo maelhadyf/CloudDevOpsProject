@@ -26,13 +26,16 @@ pipeline {
         }
         
         stage('Unit Test') {
+            tools {
+                jdk 'JDK17'  // Make sure this JDK is configured in Jenkins
+            }
             steps {
                 dir('app-code') {
                     sh '''
-                        # Show current directory and contents for debugging
-                        pwd
-                        ls -la
-
+                        # Set JAVA_HOME for Gradle
+                        export JAVA_HOME=$JAVA_HOME_17
+                        java -version
+                        
                         # Make gradlew executable
                         chmod +x ./gradlew
                         
@@ -43,7 +46,7 @@ pipeline {
             }
             post {
                 always {
-                    junit '**/target/surefire-reports/*.xml'
+                    junit '**/build/test-results/test/*.xml'
                 }
             }
         }
