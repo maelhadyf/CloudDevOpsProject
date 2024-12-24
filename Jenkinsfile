@@ -8,8 +8,10 @@ pipeline {
         appGitUrl = 'https://github.com/maelhadyf/CloudDevOpsProject.git'
         appBranch = 'main'  // or whatever branch you're using
         dockerRegistry = 'maelhadyf'
-        
-        JAVA_HOME = tool name: 'JDK11', type: 'JDK'
+    }
+
+    tools {
+        jdk 'JDK11'  // Must be configured in Jenkins Global Tool Configuration
     }
 
     
