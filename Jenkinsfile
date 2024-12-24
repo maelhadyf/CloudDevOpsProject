@@ -19,15 +19,15 @@ pipeline {
     stages {
         stage('Checkout Application') {
             steps {
-                dir('app-code') {
-                    withCredentials([usernamePassword(credentialsId: 'git-credentials', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
-                        sh '''
-                            git config --local credential.helper "!f() { echo username=\\$GIT_USERNAME; echo password=\\$GIT_PASSWORD; }; f"
-                            git clone ${appGitUrl} .
-                            git checkout ${appBranch}
-                            git config --local --unset credential.helper
-                        '''
-                    }
+                deleteDir()
+                
+                withCredentials([usernamePassword(credentialsId: 'git-credentials', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
+                    sh '''
+                        git config --local credential.helper "!f() { echo username=\\$GIT_USERNAME; echo password=\\$GIT_PASSWORD; }; f"
+                        git clone ${appGitUrl} .
+                        git checkout ${appBranch}
+                        git config --local --unset credential.helper
+                    '''
                 }
             }
         }
