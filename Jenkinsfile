@@ -98,7 +98,7 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'docker-registry-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh '''
-                        echo "${DOCKER_PASS}" | docker login ${dockerRegistry} -u "${DOCKER_USER}" --password-stdin
+                        docker login ${dockerRegistry} -u "${DOCKER_USER}" -p "${DOCKER_PASS}"
                         docker tag java-app:${BUILD_NUMBER} ${dockerRegistry}/java-app:${BUILD_NUMBER}
                         docker push ${dockerRegistry}/java-app:${BUILD_NUMBER}
                         docker logout ${dockerRegistry}
