@@ -97,12 +97,12 @@ pipeline {
         stage('Push Image') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'docker-registry-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh """
-                        echo \$DOCKER_PASS | docker login ${dockerRegistry} -u \$DOCKER_USER --password-stdin
+                    sh '''
+                        echo "${DOCKER_PASS}" | docker login ${dockerRegistry} -u "${DOCKER_USER}" --password-stdin
                         docker tag java-app:${BUILD_NUMBER} ${dockerRegistry}/java-app:${BUILD_NUMBER}
                         docker push ${dockerRegistry}/java-app:${BUILD_NUMBER}
                         docker logout ${dockerRegistry}
-                    """
+                    '''
                 }
             }
         }
@@ -111,7 +111,7 @@ pipeline {
         stage('Deploy to OpenShift') {
             steps {
                 withCredentials([string(credentialsId: 'openshift-credentials', variable: 'TOKEN')]) {
-                    sh """
+                    sh '''
                         oc login --token=${TOKEN}
 
                         # Update deployment with local image
@@ -125,7 +125,7 @@ pipeline {
                         
                         # Wait for rollout to complete
                         oc rollout status deployment/java-app
-                    """
+                    '''
                 }
             }
         }
