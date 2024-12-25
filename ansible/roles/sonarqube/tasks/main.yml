@@ -1,77 +1,154 @@
-- name: Install required packages
-  dnf:
-    name:
-      - unzip
-      - wget
-    state: present
+---
+- name: Deploy SonarQube Container
+  vars:
+    venv_path: "/opt/venv"
+    venv_python: "python3"
+    sonar_port: 9000
+    postgres_port: 5433
+    postgres_password: "sonarpass"
+    postgres_user: "sonar"
+    postgres_db: "sonarqube"
 
-- name: Remove existing SonarQube directory
-  file:
-    path: /opt/sonarqube
-    state: absent
+  tasks:
+    - name: Install required packages
+      dnf:
+        name:
+          - docker
+          - python3
+          - python3-pip
+        state: present
+        update_cache: yes
 
-- name: Create SonarQube directory
-  file:
-    path: /opt/sonarqube
-    state: directory
-    mode: '0755'
+    - name: Create virtual environment directory
+      file:
+        path: "{{ venv_path }}"
+        state: directory
+        mode: '0755'
 
-- name: Download SonarQube
-  get_url:
-    url: https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-9.9.0.65466.zip
-    dest: /opt/sonarqube.zip
+    - name: Create virtual environment
+      command: "python3 -m venv {{ venv_path }}"
+      args:
+        creates: "{{ venv_path }}/bin/activate"
 
-- name: Extract SonarQube
-  unarchive:
-    src: /opt/sonarqube.zip
-    dest: /opt/
-    remote_src: yes
+    - name: Install requests package in virtualenv
+      pip:
+        name: "requests==2.31.0"
+        state: present
+        virtualenv: "{{ venv_path }}"
 
-- name: Copy SonarQube files
-  shell: cp -r /opt/sonarqube-9.9.0.65466/* /opt/sonarqube/
-  args:
-    creates: /opt/sonarqube/bin
+    - name: Install Docker Python package in virtualenv
+      pip:
+        name: 
+          - "docker>=7.1.0"
+        state: present
+        virtualenv: "{{ venv_path }}"
 
-- name: Remove extracted directory
-  file:
-    path: /opt/sonarqube-9.9.0.65466
-    state: absent
+    - name: Start and enable Docker service
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
 
-- name: Create SonarQube user
-  user:
-    name: sonar
-    system: yes
-    shell: /sbin/nologin
+    - name: Ensure docker group exists
+      group:
+        name: docker
+        state: present
 
-- name: Set SonarQube directory ownership
-  file:
-    path: /opt/sonarqube
-    owner: sonar
-    group: sonar
-    recurse: yes
+    - name: Add current user to docker group
+      user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: yes
 
-- name: Create SonarQube service file
-  template:
-    src: sonarqube.service.j2
-    dest: /etc/systemd/system/sonarqube.service
+    - name: Set proper permissions for Docker socket
+      file:
+        path: /var/run/docker.sock
+        mode: '0666'
+        state: file
 
-- name: Set system limits for SonarQube
-  sysctl:
-    name: "{{ item.name }}"
-    value: "{{ item.value }}"
-    state: present
-  with_items:
-    - { name: 'vm.max_map_count', value: '262144' }
-    - { name: 'fs.file-max', value: '65536' }
+    - name: Restart Docker service
+      systemd:
+        name: docker
+        state: restarted
 
-- name: Start SonarQube service
-  systemd:
-    name: sonarqube
-    state: started
-    enabled: yes
-    daemon_reload: yes
+    - name: Wait for Docker socket
+      wait_for:
+        path: /var/run/docker.sock
+        state: present
+        timeout: 30
 
-- name: Check SonarQube service status
-  systemd:
-    name: sonarqube
-    state: started
+    - name: Create Docker network
+      docker_network:
+        name: sonarqube_network
+        state: present
+      environment:
+        PYTHONPATH: "{{ venv_path }}/lib/python3/site-packages"
+      vars:
+        ansible_python_interpreter: "{{ venv_path }}/bin/python"
+
+    - name: Deploy PostgreSQL container
+      docker_container:
+        name: sonarqube_db
+        image: postgres:13
+        networks:
+          - name: sonarqube_network
+        env:
+          POSTGRES_USER: "{{ postgres_user }}"
+          POSTGRES_PASSWORD: "{{ postgres_password }}"
+          POSTGRES_DB: "{{ postgres_db }}"
+        ports:
+          - "{{ postgres_port }}:5432"
+        restart_policy: always
+        state: started
+      environment:
+        PYTHONPATH: "{{ venv_path }}/lib/python3/site-packages"
+      vars:
+        ansible_python_interpreter: "{{ venv_path }}/bin/python"
+
+    - name: Create SonarQube data directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0777'
+      with_items:
+        - /opt/sonarqube/data
+        - /opt/sonarqube/extensions
+        - /opt/sonarqube/logs
+
+    - name: Set VM max map count
+      sysctl:
+        name: vm.max_map_count
+        value: '262144'
+        state: present
+
+    - name: Deploy SonarQube container
+      docker_container:
+        name: sonarqube
+        image: sonarqube:latest
+        networks:
+          - name: sonarqube_network
+        env:
+          SONAR_JDBC_URL: "jdbc:postgresql://sonarqube_db:5432/{{ postgres_db }}"
+          SONAR_JDBC_USERNAME: "{{ postgres_user }}"
+          SONAR_JDBC_PASSWORD: "{{ postgres_password }}"
+        ports:
+          - "{{ sonar_port }}:9000"
+        volumes:
+          - /opt/sonarqube/data:/opt/sonarqube/data
+          - /opt/sonarqube/extensions:/opt/sonarqube/extensions
+          - /opt/sonarqube/logs:/opt/sonarqube/logs
+        restart_policy: always
+        state: started
+      environment:
+        PYTHONPATH: "{{ venv_path }}/lib/python3/site-packages"
+      vars:
+        ansible_python_interpreter: "{{ venv_path }}/bin/python"
+
+    - name: Wait for SonarQube to start
+      wait_for:
+        port: "{{ sonar_port }}"
+        timeout: 300
+
+    - name: Print access information
+      debug:
+        msg: "SonarQube will be accessible at http://localhost:{{ sonar_port }} (default credentials: admin/admin)"
