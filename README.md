@@ -2,7 +2,7 @@
 
 ## Infrastructure Diagram
 
-
+![diagram-export-12-25-2024-8_54_08-PM](https://github.com/user-attachments/assets/39e3c51c-55eb-4b6a-a420-2e2b7771b58e)
 
 ---
 
