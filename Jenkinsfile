@@ -64,11 +64,14 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 dir('app-code') {
-                    sh '''
-                        ./gradlew sonarqube \
-                        -Dsonar.projectKey=java-app \
-                        -Dsonar.host.url=http://localhost:9000
-                    '''
+                    withCredentials([string(credentialsId: 'sonar-credentials', variable: 'TOKEN')]) {
+                        sh '''
+                            ./gradlew sonarqube \
+                            -Dsonar.projectKey=java-app \
+                            -Dsonar.host.url=http://localhost:9000 \
+                            -Dsonar.login=${TOKEN}
+                        '''
+                    }
                 }
             }
         }
