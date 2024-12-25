@@ -71,11 +71,11 @@ pipeline {
                     withCredentials([string(credentialsId: 'sonar-credentials', variable: 'TOKEN')]) {
                         sh '''
                             java -version
-                            
-                            ./gradlew sonarqube \
+
+                            ./gradlew sonar \
                             -Dsonar.projectKey=java-app \
                             -Dsonar.host.url=http://localhost:9000 \
-                            -Dsonar.login=${TOKEN}
+                            -Dsonar.token=${TOKEN}
                         '''
                     }
                 }
