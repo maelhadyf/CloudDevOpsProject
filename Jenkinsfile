@@ -7,7 +7,8 @@ pipeline {
     environment {
         appGitUrl = 'https://github.com/maelhadyf/CloudDevOpsProject.git'
         appBranch = 'main'  // or whatever branch you're using
-        dockerRegistry = 'maelhadyf'
+        DOCKER_REGISTRY = 'docker.io/maelhadyf'
+        OPENSHIFT_SERVER  = 'https://api.ocp-training.ivolve-test.com:6443'
     }
 
     
@@ -98,10 +99,10 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'docker-registry-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh '''
-                        docker login ${dockerRegistry} -u "${DOCKER_USER}" -p "${DOCKER_PASS}"
-                        docker tag java-app:${BUILD_NUMBER} ${dockerRegistry}/java-app:${BUILD_NUMBER}
-                        docker push ${dockerRegistry}/java-app:${BUILD_NUMBER}
-                        docker logout ${dockerRegistry}
+                        echo ${DOCKER_PASS} | docker login -u ${DOCKER_USER} --password-stdin
+                        docker tag java-app:${BUILD_NUMBER} ${DOCKER_REGISTRY}/java-app:${BUILD_NUMBER}
+                        docker push ${DOCKER_REGISTRY}/java-app:${BUILD_NUMBER}
+                        docker logout ${DOCKER_REGISTRY}
                     '''
                 }
             }
@@ -112,7 +113,7 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'openshift-credentials', variable: 'TOKEN')]) {
                     sh '''
-                        oc login --token=${TOKEN}
+                        oc login --token=${TOKEN} --server=${OPENSHIFT_SERVER} --insecure-skip-tls-verify=true
 
                         # Update deployment with local image
                         oc set image deployment/java-app java-app=docker://localhost:5000/java-app:${BUILD_NUMBER} --local
