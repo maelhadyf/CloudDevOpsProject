@@ -104,7 +104,7 @@ ansible-playbook main.yml
 
 ### 3. Jenkins Configuration
 
-#### Plugins Installation
+#### 1- Plugins Installation
 ```bash
 java -jar jenkins-cli.jar -s http://localhost:8080/ -auth $JENKINS_USER:$JENKINS_PASS install-plugin \
   configuration-as-code \
@@ -126,7 +126,7 @@ java -jar jenkins-cli.jar -s http://localhost:8080/ -auth $JENKINS_USER:$JENKINS
 
 ---
 
-#### Jenkins Configuration as Code (JCasC)
+#### 2- Jenkins Configuration as Code (JCasC)
 
 created slave agent, pipline and all required configurations using `jenkins.yml` file
 
@@ -154,7 +154,7 @@ sudo systemctl restart jenkins
 
 ---
 
-#### Configure required credentials:
+#### 3- Configure required credentials:
 
 - slave ssh private key
 - git access token
