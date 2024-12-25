@@ -116,7 +116,7 @@ pipeline {
                         oc login --token=${TOKEN} --server=${OPENSHIFT_SERVER} --insecure-skip-tls-verify=true
 
                         # Update deployment with local image
-                        oc set image deployment/java-app java-app=docker://localhost:5000/java-app:${BUILD_NUMBER} --local
+                        oc set image deployment/java-app java-app=docker://localhost:5000/java-app:${BUILD_NUMBER}
                         
                         # Create or update service to expose port 8081
                         oc create service clusterip java-app --tcp=8081:8081 --dry-run=client -o yaml | oc apply -f -
