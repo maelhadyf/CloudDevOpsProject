@@ -116,9 +116,7 @@ pipeline {
                         oc login --token=${TOKEN} --server=${OPENSHIFT_SERVER} --insecure-skip-tls-verify=true
 
                         # Create deployment if it doesn't exist
-                        oc create deployment java-app --image=docker://localhost:5000/java-app:${BUILD_NUMBER} --dry-run=client -o yaml | \
-                        sed '/spec:/a\\          ports:\\n          - containerPort: 8081\\n            protocol: TCP' | \
-                        oc apply -f -
+                        oc create deployment java-app --image=docker://localhost:5000/java-app:${BUILD_NUMBER} --dry-run=client -o yaml | oc apply -f -
 
                         # Create or update service to expose port 8081
                         oc create service clusterip java-app --tcp=8081:8081 --dry-run=client -o yaml | oc apply -f -
