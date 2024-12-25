@@ -1,0 +1,7 @@
+venv_path: "/opt/venv"
+venv_python: "python3"
+sonar_port: 9000
+postgres_port: 5433
+postgres_password: "sonarpass"
+postgres_user: "sonar"
+postgres_db: "sonarqube"

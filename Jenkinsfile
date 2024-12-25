@@ -5,8 +5,6 @@ pipeline {
 
 
     environment {
-        appGitUrl = 'https://github.com/maelhadyf/CloudDevOpsProject.git'
-        appBranch = 'main'  // or whatever branch you're using
         DOCKER_REGISTRY = 'docker.io/maelhadyf'
         OPENSHIFT_SERVER  = 'https://api.ocp-training.ivolve-test.com:6443'
     }
@@ -115,17 +113,11 @@ pipeline {
                     sh '''
                         oc login --token=${TOKEN} --server=${OPENSHIFT_SERVER} --insecure-skip-tls-verify=true
 
-                        # Create deployment if it doesn't exist
-                        oc create deployment java-app --image=docker://localhost:5000/java-app:${BUILD_NUMBER} --dry-run=client -o yaml | oc apply -f -
-
-                        # Create or update service to expose port 8081
-                        oc create service clusterip java-app --tcp=8081:8081 --dry-run=client -o yaml | oc apply -f -
-                        
-                        # Create route to expose the service
-                        oc expose service java-app --port=8081 --target-port=8081 || true
-                        
-                        # Wait for rollout to complete
-                        oc rollout status deployment/java-app
+                        # Replace variables in deployment.yml
+                        sed 's|\${BUILD_NUMBER}|'${BUILD_NUMBER}'|g' deployment.yml > deployment_processed.yml
+            
+                        # Apply the configuration
+                        oc apply -f deployment_processed.yml
 
                         # Get the Route URL
                         echo "Application is deployed at: \$(oc get route java-app -o jsonpath='{.spec.host}')"
