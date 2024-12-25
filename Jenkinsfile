@@ -115,9 +115,11 @@ pipeline {
                     sh '''
                         oc login --token=${TOKEN} --server=${OPENSHIFT_SERVER} --insecure-skip-tls-verify=true
 
-                        # Update deployment with local image
-                        oc set image deployment/java-app java-app=docker://localhost:5000/java-app:${BUILD_NUMBER}
-                        
+                        # Create deployment if it doesn't exist
+                        oc create deployment java-app --image=docker://localhost:5000/java-app:${BUILD_NUMBER} --dry-run=client -o yaml | \
+                        sed '/spec:/a\\          ports:\\n          - containerPort: 8081\\n            protocol: TCP' | \
+                        oc apply -f -
+
                         # Create or update service to expose port 8081
                         oc create service clusterip java-app --tcp=8081:8081 --dry-run=client -o yaml | oc apply -f -
                         
@@ -126,6 +128,9 @@ pipeline {
                         
                         # Wait for rollout to complete
                         oc rollout status deployment/java-app
+
+                        # Get the Route URL
+                        echo "Application is deployed at: \$(oc get route java-app -o jsonpath='{.spec.host}')"
                     '''
                 }
             }
