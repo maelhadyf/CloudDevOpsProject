@@ -10,10 +10,6 @@ pipeline {
         dockerRegistry = 'maelhadyf'
     }
 
-    tools {
-        jdk 'JDK11'  // Must be configured in Jenkins Global Tool Configuration
-    }
-
     
     options {
         timestamps()
@@ -31,6 +27,10 @@ pipeline {
         }
         
         stage('Unit Test') {
+
+            tools {
+                jdk 'JDK11'  // Must be configured in Jenkins Global Tool Configuration
+            }
             steps {
                 dir('app-code') {
                     sh '''
@@ -62,10 +62,16 @@ pipeline {
         }
         
         stage('SonarQube Analysis') {
+
+            tools {
+                jdk 'JDK17'  // Must be configured in Jenkins Global Tool Configuration
+            }
             steps {
                 dir('app-code') {
                     withCredentials([string(credentialsId: 'sonar-credentials', variable: 'TOKEN')]) {
                         sh '''
+                            java -version
+                            
                             ./gradlew sonarqube \
                             -Dsonar.projectKey=java-app \
                             -Dsonar.host.url=http://localhost:9000 \
