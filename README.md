@@ -22,7 +22,7 @@ This project implements a complete DevOps infrastructure using **Terraform**, **
 
 ## 🚀 Getting Started
 
-### Prerequisites
+### ✅ Prerequisites
 - AWS Account and configured AWS CLI.
 - Terraform installed (v1.0.0+).
 - Ansible installed (v2.9+).
@@ -34,13 +34,13 @@ This project implements a complete DevOps infrastructure using **Terraform**, **
 
 ### 1. Terraform Configuration
 Our infrastructure as code setup includes:
-- **S3 + DynamoDB backend configuration**
-- **VPC with public subnet**
+- **S3 + DynamoDB backend configuration** 🗂️
+- **VPC with public subnet** 🌐
 - **Two EC2 instances**:
-  - `t2.small`
-  - `t3.large`
-- **CloudWatch monitoring dashboard**
-- **IAM roles for monitoring**
+  - `t2.small` 🖥️
+  - `t3.large` 🖥️
+- **CloudWatch monitoring dashboard** 📊
+- **IAM roles for monitoring** 🔐
 
 ---
 
@@ -65,7 +65,7 @@ terraform init -migrate-state
 
 ---
 
-### 2. Ansible Configuration
+### ⚙️ 2. Ansible Configuration
 Ansible automates the installation and configuration of:
 
 #### **Primary Instance**
@@ -73,11 +73,11 @@ Ansible automates the installation and configuration of:
 - Java Runtime
 
 #### **Secondary Instance**
-- Java 11 & 17
-- Git
-- Docker
-- SonarQube
-- OpenShift CLI
+- Java 11 & 17 ☕
+- Git 🧰
+- Docker 🐳
+- SonarQube 🔍
+- OpenShift CLI 📂
 
 ---
 
@@ -102,7 +102,7 @@ ansible-playbook main.yml
 
 ---
 
-### 3. Jenkins Configuration
+### 🛠️ 3. Jenkins Configuration
 
 #### 1- Plugins Installation
 ```bash
@@ -154,7 +154,7 @@ sudo systemctl restart jenkins
 
 ---
 
-#### 3- Configure required credentials:
+#### 3- Configure required credentials 🔑:
 
 - slave ssh private key
 - git access token
