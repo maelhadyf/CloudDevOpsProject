@@ -6,7 +6,7 @@ jenkins:
         name: "jenkins-slave"
         labelString: "jenkins-slave"
         numExecutors: 2
-        remoteFS: "/home/jenkins"
+        remoteFS: "/home/ec2-user"
         launcher:
           ssh:
             host: "44.222.190.238"
@@ -41,12 +41,13 @@ tool:
     installations:
       - name: "Default"
         home: "/usr/bin/git"    # Update based on 'which git' output
-        
+
   jdk:
     installations:
       - name: "JDK11"
-        home: "/usr/bin/java"  # Update based on actual Java path
-
+        home: "/usr/lib/jvm/java-11-amazon-corretto.x86_64"
+      - name: "JDK17"
+        home: "/usr/lib/jvm/java-17-amazon-corretto.x86_64"
 
 jobs:
   - script: >
