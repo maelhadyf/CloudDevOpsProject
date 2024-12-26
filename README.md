@@ -12,7 +12,7 @@ This project implements a complete DevOps infrastructure using **Terraform**, **
 ---
 
 ## 🏗️ Architecture Components
-- **Jenkins CI/CD Server**
+- **Effortless Jenkins CI/CD Server Setup with JCasC**
 - **SonarQube Code Quality Server**
 - **AWS CloudWatch Monitoring**
 - **Terraform-managed Infrastructure**
